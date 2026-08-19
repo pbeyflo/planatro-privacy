@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kraal — reparto de secciones</title>
+<meta name="description" content="Reparto de secciones: personas, preferencias, vetos y afinidades. Funciona sin conexión.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDEFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141A16" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kraal">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icono-180.png">
+<link rel="icon" type="image/png" sizes="180x180" href="icono-180.png">
+<style>
+/* ---------- fichas de color ---------- */
+:root{
+  --papel:#EDEFE6;
+  --papel-2:#E4E8DA;
+  --carta:#F7F8F2;
+  --tinta:#1B2A22;
+  --tinta-2:#5A6B60;
+  --linea:#CBD3C0;
+  --accion:#2E5E4A;
+  --alerta:#B3361F;
+  --sombra:0 1px 0 rgba(27,42,34,.06), 0 6px 18px -12px rgba(27,42,34,.5);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --papel:#141A16;
+    --papel-2:#1A221C;
+    --carta:#1F2822;
+    --tinta:#E8EDE2;
+    --tinta-2:#9FAE9F;
+    --linea:#2F3B33;
+    --accion:#6FBF9A;
+    --alerta:#F08163;
+    --sombra:0 1px 0 rgba(0,0,0,.3), 0 8px 20px -14px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="light"]{
+  --papel:#EDEFE6; --papel-2:#E4E8DA; --carta:#F7F8F2; --tinta:#1B2A22;
+  --tinta-2:#5A6B60; --linea:#CBD3C0; --accion:#2E5E4A; --alerta:#B3361F;
+}
+:root[data-theme="dark"]{
+  --papel:#141A16; --papel-2:#1A221C; --carta:#1F2822; --tinta:#E8EDE2;
+  --tinta-2:#9FAE9F; --linea:#2F3B33; --accion:#6FBF9A; --alerta:#F08163;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--papel);
+  color:var(--tinta);
+  font:15px/1.5 "Avenir Next","Avenir",-apple-system,"Segoe UI",system-ui,sans-serif;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='320'%3E%3Cg fill='none' stroke='%231B2A22' stroke-opacity='.055' stroke-width='1.1'%3E%3Cpath d='M-30 70 C 70 20 150 110 250 60 S 420 30 470 90'/%3E%3Cpath d='M-30 100 C 70 52 155 140 255 92 S 420 62 470 120'/%3E%3Cpath d='M-30 132 C 75 86 160 172 260 126 S 420 96 470 152'/%3E%3Cpath d='M-30 230 C 60 190 140 262 230 222 S 400 196 470 244'/%3E%3Cpath d='M-30 262 C 60 222 145 292 235 254 S 400 228 470 276'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{
+  font-family:"Superclarendon","Rockwell","Roboto Slab",Georgia,serif;
+  font-weight:600; letter-spacing:-.01em; margin:0;
+}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.78em;letter-spacing:.02em}
+
+/* ---------- cabecera ---------- */
+header{
+  position:sticky; top:0; z-index:40;
+  background:color-mix(in srgb, var(--papel) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--linea);
+}
+.barra{max-width:1440px;margin:0 auto;padding:14px 22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.marca{display:flex;align-items:baseline;gap:10px}
+.marca h1{font-size:26px}
+.marca .sub{color:var(--tinta-2);font-size:12px;letter-spacing:.09em;text-transform:uppercase}
+nav{display:flex;gap:2px;margin-left:auto;background:var(--papel-2);padding:3px;border-radius:999px;border:1px solid var(--linea)}
+nav button{
+  font:inherit;font-size:13.5px;font-weight:600;color:var(--tinta-2);
+  background:none;border:0;padding:7px 15px;border-radius:999px;cursor:pointer;
+}
+nav button[aria-selected="true"]{background:var(--carta);color:var(--tinta);box-shadow:var(--sombra)}
+nav button:focus-visible,.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+  outline:2.5px solid var(--accion);outline-offset:2px
+}
+
+/* ---------- botones y campos ---------- */
+.btn{
+  font:inherit;font-size:13.5px;font-weight:600;
+  background:var(--carta);color:var(--tinta);border:1px solid var(--linea);
+  padding:8px 14px;border-radius:8px;cursor:pointer;box-shadow:var(--sombra);
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.btn:hover{border-color:var(--tinta-2)}
+.btn.principal{background:var(--accion);border-color:var(--accion);color:#F4F7F1}
+@media (prefers-color-scheme: dark){ .btn.principal{color:#0F1512} }
+:root[data-theme="light"] .btn.principal{color:#F4F7F1}
+:root[data-theme="dark"]  .btn.principal{color:#0F1512}
+.btn.principal:hover{filter:brightness(1.08)}
+.btn.fino{padding:5px 10px;font-size:12.5px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+input[type=text],input[type=number],select,textarea{
+  font:inherit;font-size:14px;color:var(--tinta);background:var(--carta);
+  border:1px solid var(--linea);border-radius:7px;padding:7px 9px;width:100%;
+}
+input[type=color]{width:34px;height:30px;padding:2px;border:1px solid var(--linea);border-radius:7px;background:var(--carta);cursor:pointer}
+label.campo{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--tinta-2);font-weight:700;margin-bottom:4px}
+
+main{max-width:1440px;margin:0 auto;padding:20px 22px 90px}
+.vista[hidden]{display:none}
+
+/* ---------- avisos ---------- */
+#avisos{margin:0 0 18px}
+.aviso{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--carta);border:1px solid var(--linea);border-left:4px solid var(--tinta-2);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:14px;box-shadow:var(--sombra);
+}
+.aviso.grave{border-left-color:var(--alerta)}
+.aviso.ok{border-left-color:var(--accion)}
+.aviso b{font-weight:700}
+.resumen{
+  display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;
+  padding:12px 16px;border:1px solid var(--linea);border-radius:var(--r);
+  background:var(--carta);box-shadow:var(--sombra);margin-bottom:14px;
+}
+.resumen .dato{display:flex;flex-direction:column;line-height:1.15}
+.resumen .dato .n{font-family:"Superclarendon","Rockwell",Georgia,serif;font-size:22px;font-weight:600}
+.resumen .dato .t{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--tinta-2);font-weight:700}
+
+/* ---------- tablón ---------- */
+.acciones{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.tablon{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;align-items:start}
+.columna{
+  background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);
+  box-shadow:var(--sombra);min-height:180px;display:flex;flex-direction:column;
+  border-top:3px solid var(--sec,var(--linea));
+}
+.columna.dentro{outline:2.5px dashed var(--sec,var(--accion));outline-offset:-4px}
+.col-cab{padding:12px 12px 10px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--linea)}
+.panol{flex:0 0 34px;height:26px}
+.col-cab .nom{font-family:"Superclarendon","Rockwell",Georgia,serif;font-weight:600;font-size:16px;line-height:1.1}
+.col-cab .cupo{font-size:11.5px;color:var(--tinta-2);font-weight:600}
+.col-cab .cupo.mal{color:var(--alerta)}
+.lista{padding:10px;display:flex;flex-direction:column;gap:8px;flex:1}
+.vacia{color:var(--tinta-2);font-size:13px;text-align:center;padding:18px 6px;font-style:italic}
+
+.ficha{
+  background:var(--papel);border:1px solid var(--linea);border-radius:8px;
+  padding:8px 10px;cursor:grab;display:flex;flex-direction:column;gap:5px;
+}
+.ficha:active{cursor:grabbing}
+.ficha.arrastrando{opacity:.35}
+.ficha.elegida{outline:2.5px solid var(--accion);outline-offset:1px}
+.ficha .fila{display:flex;align-items:center;gap:7px}
+.ficha .nombre{font-weight:600;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.candado{background:none;border:0;padding:0 2px;cursor:pointer;font-size:13px;opacity:.3;line-height:1}
+.candado.on{opacity:1}
+.marcas{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.pref{font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:999px;border:1px solid var(--linea);color:var(--tinta-2)}
+.pref.p1{background:var(--accion);border-color:var(--accion);color:var(--papel)}
+.pref.p2{background:color-mix(in srgb,var(--accion) 45%,var(--carta));border-color:transparent}
+.pref.p3{background:color-mix(in srgb,var(--accion) 20%,var(--carta));border-color:transparent}
+.pref.fuera{background:var(--carta);color:var(--tinta-2)}
+.pref.prohibida{background:var(--alerta);border-color:var(--alerta);color:#fff}
+.mini{font-size:11px;padding:2px 6px;border-radius:999px;font-weight:700}
+.mini.veto{background:color-mix(in srgb,var(--alerta) 18%,var(--carta));color:var(--alerta);border:1px solid color-mix(in srgb,var(--alerta) 40%,transparent)}
+.mini.afin{background:color-mix(in srgb,var(--accion) 16%,var(--carta));color:var(--accion);border:1px solid color-mix(in srgb,var(--accion) 40%,transparent)}
+
+.pista{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  background:var(--tinta);color:var(--papel);padding:9px 16px;border-radius:999px;
+  font-size:13px;font-weight:600;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);z-index:60;
+}
+.pista[hidden]{display:none}
+
+/* ---------- personas ---------- */
+.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.tarjeta{background:var(--carta);border:1px solid var(--linea);border-radius:var(--r);padding:14px;box-shadow:var(--sombra)}
+.tarjeta .cab{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.tarjeta .cab input{font-weight:700;font-size:15px}
+.borra{background:none;border:0;color:var(--tinta-2);cursor:pointer;font-size:16px;padding:4px 6px;border-radius:6px;line-height:1}
+.borra:hover{color:var(--alerta);background:color-mix(in srgb,var(--alerta) 12%,transparent)}
+.bloque{margin-bottom:12px}
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tres .num{font-size:10px;font-weight:800;color:var(--tinta-2);letter-spacing:.06em;margin-bottom:3px;display:block}
+.chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;
+  background:var(--papel);border:1px solid var(--linea);border-radius:999px;padding:3px 5px 3px 10px;
+}
+.chip button{background:none;border:0;cursor:pointer;color:var(--tinta-2);font-size:13px;line-height:1;padding:0 2px}
+.chip button:hover{color:var(--alerta)}
+.chip.veto{border-color:color-mix(in srgb,var(--alerta) 45%,transparent)}
+.chip.afin{border-color:color-mix(in srgb,var(--accion) 45%,transparent)}
+.mas{border:1px dashed var(--linea);background:none;color:var(--tinta-2);font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 11px;cursor:pointer}
+.mas:hover{border-color:var(--tinta-2);color:var(--tinta)}
+.pastillas{display:flex;gap:5px;flex-wrap:wrap}
+.pastilla{font-size:12px;font-weight:600;border:1px solid var(--linea);background:var(--papel);border-radius:999px;padding:4px 10px;cursor:pointer;color:var(--tinta-2);font-family:inherit}
+.pastilla[aria-pressed="true"]{background:var(--alerta);border-color:var(--alerta);color:#fff}
+.pop{
+  position:absolute;z-index:80;background:var(--carta);border:1px solid var(--linea);
+  border-radius:var(--r);box-shadow:0 14px 34px -14px rgba(0,0,0,.5);padding:6px;
+  max-height:270px;overflow:auto;min-width:190px;
+}
+.pop button{
+  display:flex;width:100%;align-items:center;gap:8px;background:none;border:0;
+  font:inherit;font-size:13.5px;text-align:left;padding:6px 8px;border-radius:6px;cursor:pointer;color:var(--tinta)
+}
+.pop button:hover{background:var(--papel-2)}
+.pop .tic{width:14px;color:var(--accion);font-weight:800}
+.pop .vacio{padding:10px;font-size:13px;color:var(--tinta-2)}
+
+/* ---------- secciones ---------- */
+.sec-tarjeta{background:var(--carta);border:1px solid var(--linea);border-left:5px solid var(--sec);border-radius:var(--r);padding:14px;box-shadow:var(--sombra)}
+.sec-tarjeta .cab{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nota{color:var(--tinta-2);font-size:13px;margin:6px 0 16px;max-width:62ch}
+details.masivo{margin-top:16px}
+details.masivo summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--tinta-2)}
+details.masivo textarea{margin-top:8px;min-height:110px;resize:vertical}
+@media (max-width:640px){
+  .barra{padding:12px 14px}
+  main{padding:16px 14px 80px}
+  nav{width:100%;margin-left:0;overflow:auto}
+}
+@media (prefers-reduced-motion:no-preference){
+  .ficha,.columna,.btn{transition:box-shadow .15s ease,border-color .15s ease,opacity .15s ease}
+}
+
+/* ---------- toque, iPhone y pantallas pequeñas ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{min-height:100svh}
+header{-webkit-backdrop-filter:blur(10px)}
+.barra{
+  padding-top:max(14px, env(safe-area-inset-top));
+  padding-left:max(22px, env(safe-area-inset-left));
+  padding-right:max(22px, env(safe-area-inset-right));
+}
+main{
+  padding-left:max(22px, env(safe-area-inset-left));
+  padding-right:max(22px, env(safe-area-inset-right));
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
+}
+
+/* el dedo necesita sitio, y en iOS un campo de menos de 16px hace que Safari
+   se acerque solo al escribir */
+@media (pointer:coarse){
+  input[type=text],input[type=number],select,textarea,
+  .tarjeta .cab input,.sec-tarjeta .cab input{font-size:16px;padding:9px 10px}
+  .btn{padding:10px 15px}
+  .btn.fino{padding:7px 11px}
+  nav button{padding:9px 16px}
+  .borra,.candado,.chip button{padding:6px 8px;font-size:15px}
+  .mas,.pastilla{padding:7px 13px}
+  .pop button{padding:10px 8px}
+}
+
+/* fichas: sin lupa ni menú de copiar al mantener pulsado */
+.ficha{
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.ficha.arrastrando{opacity:.3}
+.columna.dentro{background:color-mix(in srgb, var(--accion) 8%, var(--carta))}
+
+/* copia que sigue al dedo mientras se arrastra */
+.fantasma{
+  position:fixed;top:0;left:0;z-index:100;pointer-events:none;
+  background:var(--carta);border:1px solid var(--tinta-2);border-radius:8px;
+  padding:8px 10px;display:flex;flex-direction:column;gap:5px;
+  box-shadow:0 20px 34px -14px rgba(0,0,0,.6);
+  transform-origin:center;opacity:.97;
+}
+
+/* barra inferior: cuando hay una ficha cogida se convierte en el selector de sección */
+.pista{
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  max-width:min(560px, calc(100vw - 20px));
+  display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;
+  text-align:center;
+}
+.pista .quien{font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pista .destino{
+  font:inherit;font-size:12.5px;font-weight:700;line-height:1;
+  border:0;border-radius:999px;padding:8px 12px;cursor:pointer;
+  background:var(--papel);color:var(--tinta);
+}
+.pista .destino.soltar{background:var(--papel-2);opacity:.75}
+
+.pop{max-width:min(300px, calc(100vw - 24px))}
+
+@media (max-width:640px){
+  .tablon{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .rejilla{grid-template-columns:1fr}
+  .barra{gap:10px;padding-bottom:10px}
+  .marca h1{font-size:22px}
+  .marca .sub{display:none}
+  nav{width:100%;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{flex:0 0 auto}
+  .acciones{gap:7px}
+  .acciones .btn{flex:1 1 auto;justify-content:center}
+  .lista{padding:8px;gap:7px}
+  .col-cab{padding:10px 10px 8px}
+}
+
+/* Safari anterior a la versión 16 no entiende color-mix: que al menos se vea */
+@supports not (background: color-mix(in srgb, red 50%, blue)){
+  .pref.p2{background:var(--papel-2);color:var(--tinta)}
+  .pref.p3{background:var(--papel);color:var(--tinta)}
+  .mini.veto{background:var(--carta);color:var(--alerta);border:1px solid var(--alerta)}
+  .mini.afin{background:var(--carta);color:var(--accion);border:1px solid var(--accion)}
+  .chip.veto{border-color:var(--alerta)}
+  .chip.afin{border-color:var(--accion)}
+  .columna.dentro{background:var(--papel-2)}
+  header{background:var(--papel)}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="barra">
+    <div class="marca">
+      <h1>Kraal</h1>
+      <span class="sub">reparto de secciones</span>
+    </div>
+    <nav role="tablist">
+      <button role="tab" id="tab-reparto"   aria-selected="true"  data-vista="reparto">Reparto</button>
+      <button role="tab" id="tab-personas"  aria-selected="false" data-vista="personas">Personas</button>
+      <button role="tab" id="tab-secciones" aria-selected="false" data-vista="secciones">Secciones</button>
+      <button role="tab" id="tab-datos"     aria-selected="false" data-vista="datos">Datos</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ======== REPARTO ======== -->
+  <section class="vista" id="vista-reparto" role="tabpanel" aria-labelledby="tab-reparto">
+    <div class="acciones">
+      <button class="btn principal" id="b-repartir">Repartir</button>
+      <button class="btn" id="b-otra">Otra combinación</button>
+      <button class="btn" id="b-deshacer">Deshacer</button>
+      <button class="btn" id="b-candados">Quitar candados</button>
+      <button class="btn" id="b-csv">Exportar CSV</button>
+    </div>
+    <div class="resumen" id="resumen"></div>
+    <div id="avisos"></div>
+    <div class="tablon" id="tablon"></div>
+    <div id="sobrantes"></div>
+  </section>
+
+  <!-- ======== PERSONAS ======== -->
+  <section class="vista" id="vista-personas" role="tabpanel" aria-labelledby="tab-personas" hidden>
+    <div class="acciones">
+      <input type="text" id="nueva-persona" placeholder="Nombre y Enter para añadir" style="max-width:280px">
+      <button class="btn principal" id="b-anadir">Añadir persona</button>
+      <button class="btn" id="b-ejemplo">Cargar ejemplo</button>
+    </div>
+    <p class="nota">Los vetos y las afinidades son mutuos: si marcas que Ana no trabaja con Luis, Luis queda marcado con Ana.</p>
+    <div class="rejilla" id="rejilla-personas"></div>
+    <details class="masivo">
+      <summary>Añadir varias personas de una vez</summary>
+      <textarea id="masivo" placeholder="Un nombre por línea"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="b-masivo">Añadir la lista</button></div>
+    </details>
+  </section>
+
+  <!-- ======== SECCIONES ======== -->
+  <section class="vista" id="vista-secciones" role="tabpanel" aria-labelledby="tab-secciones" hidden>
+    <div class="acciones">
+      <button class="btn principal" id="b-nueva-seccion">Añadir sección</button>
+    </div>
+    <p class="nota">El mínimo y el máximo son objetivos, no muros: si no cuadran, el reparto se hace igual y el aviso lo dice.</p>
+    <div class="rejilla" id="rejilla-secciones"></div>
+  </section>
+
+  <!-- ======== DATOS ======== -->
+  <section class="vista" id="vista-datos" role="tabpanel" aria-labelledby="tab-datos" hidden>
+    <div class="acciones">
+      <button class="btn principal" id="b-exportar">Exportar JSON</button>
+      <button class="btn" id="b-importar">Importar JSON</button>
+      <button class="btn" id="b-csv2">Exportar CSV del reparto</button>
+      <button class="btn" id="b-borrar">Empezar de cero</button>
+      <input type="file" id="fichero" accept=".json,application/json,text/json,text/plain" hidden>
+    </div>
+    <p class="nota">
+      Todo se guarda solo en este navegador (<span class="mono">localStorage</span>). Exporta el JSON para tener copia
+      o para llevarte el trabajo a otro ordenador. Las puntuaciones que usa el reparto:
+      1ª opción 100, 2ª 60, 3ª 30, cada afinidad cumplida +25, cada veto roto −1000,
+      cada plaza por debajo del mínimo −300 y cada una por encima del máximo −500.
+    </p>
+    <div class="tarjeta" style="max-width:620px">
+      <h3 style="margin-bottom:8px">Estado</h3>
+      <div id="estado-datos" class="mono" style="color:var(--tinta-2);font-size:13px"></div>
+    </div>
+  </section>
+
+</main>
+
+<div class="pista" id="pista" hidden></div>
+
+<script>
+"use strict";
+
+/* =======================================================================
+   1. ESTADO
+   ======================================================================= */
+
+const CLAVE = "kraal.v1";
+const COLORES = ["#5FA8D3","#E0A02E","#3E7A52","#C0432F","#7B3B4E","#4C6EA8","#8A6D3B","#556B2F"];
+
+const SECCIONES_BASE = [
+  {id:"castores", nombre:"Castores", min:2, max:4, color:"#5FA8D3"},
+  {id:"manada",   nombre:"Manada",   min:2, max:5, color:"#E0A02E"},
+  {id:"tropa",    nombre:"Tropa",    min:2, max:5, color:"#3E7A52"},
+  {id:"pioneros", nombre:"Pioneros", min:2, max:4, color:"#C0432F"},
+  {id:"rutas",    nombre:"Rutas",    min:2, max:4, color:"#7B3B4E"}
+];
+
+/** D = todo el documento. asig: {personaId: seccionId}. anclados: ids con candado. */
+let D = {personas:[], secciones:[], asig:{}, anclados:[]};
+let historial = [];
+let elegida = null;   // ficha seleccionada con teclado o clic
+
+const el = id => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2,9);
+const persona = id => D.personas.find(p => p.id === id);
+const seccion = id => D.secciones.find(s => s.id === id);
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function nuevaPersona(nombre){
+  return {id:uid(), nombre:nombre||"Sin nombre", top3:["","",""], vetos:[], afines:[], prohibidas:[], fijadaA:""};
+}
+
+function cargar(){
+  try{
+    const bruto = localStorage.getItem(CLAVE);
+    if(bruto){ D = normalizar(JSON.parse(bruto)); return; }
+  }catch(e){ console.warn("No se pudo leer lo guardado:", e); }
+  D = {personas:[], secciones:SECCIONES_BASE.map(s => ({...s})), asig:{}, anclados:[]};
+}
+
+function normalizar(d){
+  const out = {
+    personas: Array.isArray(d.personas) ? d.personas : [],
+    secciones: Array.isArray(d.secciones) && d.secciones.length ? d.secciones : SECCIONES_BASE.map(s=>({...s})),
+    asig: d.asig && typeof d.asig === "object" ? d.asig : {},
+    anclados: Array.isArray(d.anclados) ? d.anclados : []
+  };
+  out.personas = out.personas.map(p => ({
+    id: p.id || uid(),
+    nombre: p.nombre || "Sin nombre",
+    top3: Array.isArray(p.top3) ? [p.top3[0]||"", p.top3[1]||"", p.top3[2]||""] : ["","",""],
+    vetos: Array.isArray(p.vetos) ? p.vetos : [],
+    afines: Array.isArray(p.afines) ? p.afines : [],
+    prohibidas: Array.isArray(p.prohibidas) ? p.prohibidas : [],
+    fijadaA: p.fijadaA || ""
+  }));
+  out.secciones = out.secciones.map((s,i) => ({
+    id: s.id || uid(),
+    nombre: s.nombre || "Sección",
+    min: Number.isFinite(+s.min) ? Math.max(0,+s.min) : 0,
+    max: Number.isFinite(+s.max) ? Math.max(1,+s.max) : 5,
+    color: s.color || COLORES[i % COLORES.length]
+  }));
+  // limpiar referencias muertas
+  const idsP = new Set(out.personas.map(p=>p.id));
+  const idsS = new Set(out.secciones.map(s=>s.id));
+  for(const p of out.personas){
+    p.vetos = p.vetos.filter(i => idsP.has(i) && i !== p.id);
+    p.afines = p.afines.filter(i => idsP.has(i) && i !== p.id);
+    p.prohibidas = p.prohibidas.filter(i => idsS.has(i));
+    p.top3 = p.top3.map(i => idsS.has(i) ? i : "");
+    if(p.fijadaA && !idsS.has(p.fijadaA)) p.fijadaA = "";
+  }
+  for(const k of Object.keys(out.asig)) if(!idsP.has(k) || !idsS.has(out.asig[k])) delete out.asig[k];
+  out.anclados = out.anclados.filter(i => idsP.has(i));
+  return out;
+}
+
+let fallaGuardado = false;
+function guardar(){
+  try{ localStorage.setItem(CLAVE, JSON.stringify(D)); }
+  catch(e){
+    console.warn("No se pudo guardar:", e);
+    if(!fallaGuardado){        // navegación privada de Safari, o almacenamiento lleno
+      fallaGuardado = true;
+      setTimeout(() => aviso("Este navegador no deja guardar (¿navegación privada?). Exporta el JSON antes de cerrar."), 0);
+    }
+  }
+}
+
+function foto(){                       // instantánea para deshacer
+  historial.push(JSON.stringify(D));
+  if(historial.length > 60) historial.shift();
+}
+
+function deshacer(){
+  if(!historial.length) return;
+  D = normalizar(JSON.parse(historial.pop()));
+  guardar(); pintarTodo();
+}
+
+/* =======================================================================
+   2. REPARTO
+   ======================================================================= */
+
+const PUNTOS_PREF = [100, 60, 30];
+const PUNTOS_AFIN = 25;
+const PENA_VETO   = 1000;
+const PENA_MIN    = 300;
+const PENA_MAX    = 500;
+const PENA_DURA   = 2000;   // sección prohibida o persona sin sección
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/** Secciones donde esa persona puede acabar. */
+function dominio(p, fijos){
+  if(fijos && fijos[p.id]) return [fijos[p.id]];
+  const libres = D.secciones.map(s => s.id).filter(id => !p.prohibidas.includes(id));
+  return libres.length ? libres : D.secciones.map(s => s.id);
+}
+
+/** Puntuación total de un reparto. Más alto es mejor. */
+function puntuar(asig){
+  let total = 0;
+  const porSec = {};
+  for(const p of D.personas){
+    const s = asig[p.id];
+    if(!s){ total -= PENA_DURA; continue; }
+    (porSec[s] = porSec[s] || []).push(p);
+    const i = p.top3.indexOf(s);
+    if(i >= 0 && s) total += PUNTOS_PREF[i];
+    if(p.prohibidas.includes(s)) total -= PENA_DURA;
+  }
+  for(const sid in porSec){
+    const g = porSec[sid];
+    for(let i = 0; i < g.length; i++){
+      for(let j = i + 1; j < g.length; j++){
+        const a = g[i], b = g[j];
+        if(a.vetos.includes(b.id) || b.vetos.includes(a.id)) total -= PENA_VETO;
+        else if(a.afines.includes(b.id) || b.afines.includes(a.id)) total += PUNTOS_AFIN;
+      }
+    }
+  }
+  for(const s of D.secciones){
+    const n = (porSec[s.id] || []).length;
+    if(n < s.min) total -= PENA_MIN * (s.min - n);
+    if(n > s.max) total -= PENA_MAX * (n - s.max);
+  }
+  return total;
+}
+
+/** Arranque voraz: primero quien menos opciones tiene. */
+function voraz(rnd, fijos){
+  const asig = Object.assign({}, fijos);
+  const libres = D.personas.filter(p => !(p.id in asig));
+  libres.sort((a,b) => (dominio(a).length - dominio(b).length) || (rnd() - .5));
+  for(const p of libres){
+    let mejor = null, mejorV = -Infinity;
+    for(const sid of dominio(p)){
+      asig[p.id] = sid;
+      const v = puntuar(asig) + rnd() * 10;   // desempate al azar
+      if(v > mejorV){ mejorV = v; mejor = sid; }
+    }
+    asig[p.id] = mejor;
+  }
+  return asig;
+}
+
+/** Mejora local: mover una persona, o intercambiar dos, mientras suba el total. */
+function mejorar(asig, movibles){
+  let base = puntuar(asig);
+  for(let vuelta = 0; vuelta < 80; vuelta++){
+    let mejoro = false;
+
+    for(const p of movibles){
+      const actual = asig[p.id];
+      let mejorSid = actual, mejorV = base;
+      for(const sid of dominio(p)){
+        if(sid === actual) continue;
+        asig[p.id] = sid;
+        const v = puntuar(asig);
+        if(v > mejorV){ mejorV = v; mejorSid = sid; }
+      }
+      asig[p.id] = mejorSid;
+      if(mejorSid !== actual){ base = mejorV; mejoro = true; }
+    }
+
+    for(let i = 0; i < movibles.length; i++){
+      for(let j = i + 1; j < movibles.length; j++){
+        const a = movibles[i], b = movibles[j];
+        const sa = asig[a.id], sb = asig[b.id];
+        if(sa === sb) continue;
+        if(!dominio(a).includes(sb) || !dominio(b).includes(sa)) continue;
+        asig[a.id] = sb; asig[b.id] = sa;
+        const v = puntuar(asig);
+        if(v > base){ base = v; mejoro = true; }
+        else { asig[a.id] = sa; asig[b.id] = sb; }
+      }
+    }
+
+    if(!mejoro) break;
+  }
+  return base;
+}
+
+/**
+ * Calcula un reparto completo.
+ * opciones.respetarAnclados (por defecto sí) deja quietas las fichas con candado.
+ */
+function repartir(opciones){
+  const o = Object.assign({reintentos:14, semilla:Date.now(), respetarAnclados:true}, opciones);
+  if(!D.personas.length || !D.secciones.length) return {};
+  const rnd = mulberry32(o.semilla >>> 0);
+
+  const fijos = {};
+  for(const p of D.personas){
+    if(p.fijadaA) fijos[p.id] = p.fijadaA;
+    else if(o.respetarAnclados && D.anclados.includes(p.id) && D.asig[p.id]) fijos[p.id] = D.asig[p.id];
+  }
+  const movibles = D.personas.filter(p => !(p.id in fijos));
+
+  let mejor = null, mejorV = -Infinity;
+  for(let k = 0; k < o.reintentos; k++){
+    const a = voraz(rnd, fijos);
+    const v = mejorar(a, movibles);
+    if(v > mejorV){ mejorV = v; mejor = a; }
+  }
+  return mejor || {};
+}
+
+/* =======================================================================
+   3. ANÁLISIS (avisos y marcas de cada ficha)
+   ======================================================================= */
+
+function analizar(asig){
+  const porSec = {};
+  for(const s of D.secciones) porSec[s.id] = [];
+  const sinSeccion = [];
+  for(const p of D.personas){
+    const sid = asig[p.id];
+    if(sid && porSec[sid]) porSec[sid].push(p); else sinSeccion.push(p);
+  }
+
+  const vetosRotos = [];
+  const afinidades = [];
+  for(const s of D.secciones){
+    const g = porSec[s.id];
+    for(let i = 0; i < g.length; i++){
+      for(let j = i + 1; j < g.length; j++){
+        const a = g[i], b = g[j];
+        if(a.vetos.includes(b.id) || b.vetos.includes(a.id)) vetosRotos.push({a, b, s});
+        else if(a.afines.includes(b.id) || b.afines.includes(a.id)) afinidades.push({a, b, s});
+      }
+    }
+  }
+
+  const cupos = D.secciones.map(s => ({s, n: porSec[s.id].length}))
+                           .filter(x => x.n < x.s.min || x.n > x.s.max);
+
+  const prohibidasRotas = D.personas.filter(p => asig[p.id] && p.prohibidas.includes(asig[p.id]));
+
+  const conteo = [0,0,0,0];   // 1ª, 2ª, 3ª, fuera del top 3
+  for(const p of D.personas){
+    const i = asig[p.id] ? p.top3.indexOf(asig[p.id]) : -1;
+    conteo[i >= 0 ? i : 3]++;
+  }
+
+  return {porSec, sinSeccion, vetosRotos, afinidades, cupos, prohibidasRotas, conteo};
+}
+
+/** Compañeros conflictivos o deseados de una persona dentro de su propia sección. */
+function marcasDe(p, asig){
+  const sid = asig[p.id];
+  if(!sid) return {vetos:[], afines:[]};
+  const comps = D.personas.filter(q => q.id !== p.id && asig[q.id] === sid);
+  return {
+    vetos:  comps.filter(q => p.vetos.includes(q.id)  || q.vetos.includes(p.id)),
+    afines: comps.filter(q => (p.afines.includes(q.id) || q.afines.includes(p.id))
+                              && !(p.vetos.includes(q.id) || q.vetos.includes(p.id)))
+  };
+}
+
+/* =======================================================================
+   4. PINTAR
+   ======================================================================= */
+
+function pintarTodo(){
+  pintarReparto();
+  pintarPersonas();
+  pintarSecciones();
+  pintarDatos();
+}
+
+/* ---- tablón ---- */
+
+function panoleta(color){
+  return `<svg class="panol" viewBox="0 0 40 30" aria-hidden="true">
+    <path d="M3 6 L37 6 L20 27 Z" fill="${esc(color)}"/>
+    <path d="M3 6 L37 6 L20 27 Z" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/>
+    <circle cx="20" cy="7.5" r="4.4" fill="${esc(color)}" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
+  </svg>`;
+}
+
+function pintarReparto(){
+  const asig = D.asig;
+  const a = analizar(asig);
+
+  // resumen
+  const total = D.personas.length;
+  el("resumen").innerHTML = total === 0
+    ? `<span style="color:var(--tinta-2)">Añade personas en la pestaña <b>Personas</b> y pulsa Repartir.</span>`
+    : [
+        ["1ª opción", a.conteo[0]], ["2ª opción", a.conteo[1]], ["3ª opción", a.conteo[2]],
+        ["fuera del top 3", a.conteo[3]], ["vetos rotos", a.vetosRotos.length],
+        ["afinidades juntas", a.afinidades.length], ["con candado", D.anclados.length]
+      ].map(([t,n]) => `<div class="dato"><span class="n">${n}</span><span class="t">${t}</span></div>`).join("");
+
+  // avisos
+  const avisos = [];
+  for(const {a:x, b:y, s} of a.vetosRotos)
+    avisos.push([`grave`, `<b>${esc(x.nombre)}</b> y <b>${esc(y.nombre)}</b> han quedado juntos en ${esc(s.nombre)}, y se vetan.`]);
+  for(const p of a.prohibidasRotas)
+    avisos.push([`grave`, `<b>${esc(p.nombre)}</b> está en ${esc(seccion(asig[p.id]).nombre)}, una sección que tiene marcada como imposible.`]);
+  for(const {s, n} of a.cupos)
+    avisos.push([n < s.min ? "" : "grave",
+      n < s.min
+        ? `${esc(s.nombre)} se queda con ${n}: ${s.min - n} por debajo del mínimo.`
+        : `${esc(s.nombre)} llega a ${n}: ${n - s.max} por encima del máximo.`]);
+  if(a.sinSeccion.length && total)
+    avisos.push(["", `Sin sección: ${a.sinSeccion.map(p => esc(p.nombre)).join(", ")}.`]);
+  if(!avisos.length && total)
+    avisos.push(["ok", `Sin conflictos: ningún veto roto y todas las secciones dentro de su cupo.`]);
+
+  el("avisos").innerHTML = avisos.map(([c, t]) => `<div class="aviso ${c}">${t}</div>`).join("");
+
+  // columnas
+  el("tablon").innerHTML = D.secciones.map(s => {
+    const g = a.porSec[s.id] || [];
+    const mal = g.length < s.min || g.length > s.max;
+    return `<div class="columna" data-sec="${s.id}" style="--sec:${esc(s.color)}">
+      <div class="col-cab">
+        ${panoleta(s.color)}
+        <div style="flex:1;min-width:0">
+          <div class="nom">${esc(s.nombre)}</div>
+          <div class="cupo ${mal ? "mal" : ""}">${g.length} de ${s.min}–${s.max}</div>
+        </div>
+      </div>
+      <div class="lista" data-sec="${s.id}">
+        ${g.length ? g.map(p => ficha(p, asig)).join("") : `<div class="vacia">Suelta aquí</div>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  // sobrantes
+  el("sobrantes").innerHTML = a.sinSeccion.length
+    ? `<div class="columna" data-sec="" style="--sec:var(--tinta-2);margin-top:14px">
+         <div class="col-cab"><div style="flex:1"><div class="nom">Sin sección</div>
+         <div class="cupo">${a.sinSeccion.length}</div></div></div>
+         <div class="lista" data-sec="">${a.sinSeccion.map(p => ficha(p, asig)).join("")}</div>
+       </div>`
+    : "";
+
+  engancharTablon();
+  el("b-deshacer").disabled = historial.length === 0;
+}
+
+function ficha(p, asig){
+  const sid = asig[p.id];
+  const i = sid ? p.top3.indexOf(sid) : -1;
+  const prohibida = sid && p.prohibidas.includes(sid);
+  const etiqueta = prohibida ? ["prohibida","imposible"]
+                 : i === 0 ? ["p1","1ª"] : i === 1 ? ["p2","2ª"] : i === 2 ? ["p3","3ª"] : ["fuera","fuera del top 3"];
+  const m = marcasDe(p, asig);
+  const anclada = D.anclados.includes(p.id);
+  const fijada = !!p.fijadaA;
+
+  return `<div class="ficha ${elegida === p.id ? "elegida" : ""}" tabindex="0"
+      data-id="${p.id}" role="button"
+      aria-label="${esc(p.nombre)}. Tócala para cogerla y elige sección abajo; con teclado, Enter y un número.">
+    <div class="fila">
+      <span class="nombre">${esc(p.nombre)}</span>
+      <button class="candado ${anclada || fijada ? "on" : ""}" data-candado="${p.id}"
+        title="${fijada ? "Fijada desde su ficha de persona" : anclada ? "Quitar candado" : "Poner candado"}"
+        ${fijada ? "disabled" : ""}>${fijada ? "📌" : "🔒"}</button>
+    </div>
+    <div class="marcas">
+      <span class="pref ${etiqueta[0]}">${etiqueta[1]}</span>
+      ${m.vetos.length  ? `<span class="mini veto" title="${esc(m.vetos.map(q=>q.nombre).join(", "))}">✕ ${m.vetos.map(q=>esc(q.nombre)).join(", ")}</span>` : ""}
+      ${m.afines.length ? `<span class="mini afin" title="${esc(m.afines.map(q=>q.nombre).join(", "))}">✓ ${m.afines.map(q=>esc(q.nombre)).join(", ")}</span>` : ""}
+    </div>
+  </div>`;
+}
+
+/* El arrastre nativo de HTML (draggable / dragstart) no funciona con el dedo
+   en iPhone ni en iPad, así que aquí se arrastra con eventos de puntero:
+   con ratón el arrastre empieza al mover, y con el dedo al mantener pulsado
+   un instante, para que un deslizamiento normal siga sirviendo para leer la
+   página. Además se puede tocar una ficha y elegir sección en la barra de
+   abajo, que es lo cómodo en una pantalla pequeña. */
+
+const ESPERA_DEDO = 250;   // ms manteniendo pulsado antes de coger la ficha
+const MARGEN_DEDO = 10;    // px: si se mueve más que esto antes de tiempo, es un scroll
+const BORDE = 90;          // px del borde de la pantalla donde la página se desplaza sola
+
+let arrastre = null;       // ficha en el aire
+let candidato = null;      // ficha pulsada, todavía sin decidir si es arrastre
+let clicIgnorable = 0;     // al soltar, el navegador manda un clic de regalo: se descarta ese y solo ese
+let globalesPuestas = false;
+
+function engancharTablon(){
+  ponerGlobales();
+
+  document.querySelectorAll(".ficha").forEach(f => {
+    const id = f.dataset.id;
+
+    f.addEventListener("pointerdown", ev => {
+      if(ev.button > 0) return;
+      if(ev.target.closest("[data-candado]")) return;
+      soltarCandidato();
+      candidato = {
+        id, ficha:f, pid:ev.pointerId, x:ev.clientX, y:ev.clientY,
+        conDedo: ev.pointerType !== "mouse", reloj:null
+      };
+      if(candidato.conDedo){
+        candidato.reloj = setTimeout(() => {
+          if(candidato) empezarArrastre(candidato.x, candidato.y);
+        }, ESPERA_DEDO);
+      }
+    });
+
+    f.addEventListener("click", ev => {
+      if(ev.target.closest("[data-candado]")) return;
+      if(descartarClic()) return;                  // el clic que sigue a un arrastre
+      ev.stopPropagation();                        // que no lo recoja también la columna
+      if(elegida && elegida !== id){               // tocar otra ficha = soltar en su columna
+        const col = f.closest(".columna");
+        if(col){ mover(elegida, col.dataset.sec); return; }
+      }
+      elegida = elegida === id ? null : id;
+      pintarReparto(); mostrarPista();
+    });
+
+    f.addEventListener("keydown", ev => {
+      if(ev.key === "Enter" || ev.key === " "){
+        ev.preventDefault();
+        elegida = elegida === id ? null : id;
+        pintarReparto(); mostrarPista();
+        const nueva = document.querySelector(`.ficha[data-id="${id}"]`);
+        if(nueva) nueva.focus();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-candado]").forEach(b => {
+    b.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const id = b.dataset.candado;
+      foto();
+      D.anclados = D.anclados.includes(id) ? D.anclados.filter(x => x !== id) : D.anclados.concat(id);
+      guardar(); pintarReparto();
+    });
+  });
+
+  document.querySelectorAll(".columna").forEach(col => {
+    col.addEventListener("click", () => {
+      if(descartarClic()) return;
+      if(elegida) mover(elegida, col.dataset.sec);
+    });
+  });
+}
+
+/** Tras soltar una ficha llega un clic sintético en el mismo sitio: se come
+    ese, y solo si viene pegado, para no tragarse el siguiente toque de verdad. */
+function descartarClic(){
+  if(clicIgnorable && Date.now() - clicIgnorable < 250){ clicIgnorable = 0; return true; }
+  clicIgnorable = 0;
+  return false;
+}
+
+function ponerGlobales(){
+  if(globalesPuestas) return;
+  globalesPuestas = true;
+
+  document.addEventListener("pointermove", ev => {
+    if(arrastre && ev.pointerId === arrastre.pid){ situarArrastre(ev.clientX, ev.clientY); return; }
+    if(!candidato || ev.pointerId !== candidato.pid) return;
+    const d = Math.hypot(ev.clientX - candidato.x, ev.clientY - candidato.y);
+    if(candidato.conDedo){
+      if(d > MARGEN_DEDO) soltarCandidato();        // está desplazando la página, no arrastrando
+    } else if(d > 4){
+      empezarArrastre(ev.clientX, ev.clientY);
+    }
+  });
+
+  const fin = ev => {
+    if(candidato && ev.pointerId === candidato.pid) soltarCandidato();
+    if(!arrastre || ev.pointerId !== arrastre.pid) return;
+    const id = arrastre.id;
+    const col = arrastre.col;
+    terminarArrastre();
+    clicIgnorable = Date.now();
+    if(col) mover(id, col.dataset.sec);
+  };
+  document.addEventListener("pointerup", fin);
+  document.addEventListener("pointercancel", ev => {
+    if(candidato && ev.pointerId === candidato.pid) soltarCandidato();
+    if(arrastre && ev.pointerId === arrastre.pid){ terminarArrastre(); clicIgnorable = Date.now(); }
+  });
+
+  // mientras una ficha está en el aire, el dedo no debe mover la página
+  document.addEventListener("touchmove", ev => { if(arrastre) ev.preventDefault(); }, {passive:false});
+  document.addEventListener("contextmenu", ev => { if(arrastre) ev.preventDefault(); });
+}
+
+function soltarCandidato(){
+  if(!candidato) return;
+  clearTimeout(candidato.reloj);
+  candidato = null;
+}
+
+function empezarArrastre(x, y){
+  const {ficha, id, pid} = candidato;
+  soltarCandidato();
+  if(arrastre || !ficha.isConnected) return;
+
+  const r = ficha.getBoundingClientRect();
+  const copia = ficha.cloneNode(true);
+  copia.className = "ficha fantasma";
+  copia.removeAttribute("tabindex");
+  copia.style.width = r.width + "px";
+  document.body.appendChild(copia);
+
+  arrastre = {id, ficha, copia, pid, dx:x - r.left, dy:y - r.top, col:null, vel:0, x, y};
+  ficha.classList.add("arrastrando");
+  document.body.style.cursor = "grabbing";
+  situarArrastre(x, y);
+  requestAnimationFrame(bucleBorde);
+}
+
+function situarArrastre(x, y){
+  const a = arrastre;
+  if(!a) return;
+  a.x = x; a.y = y;
+  a.copia.style.transform = `translate(${x - a.dx}px, ${y - a.dy}px) rotate(-1.5deg)`;
+
+  const debajo = document.elementFromPoint(x, y);
+  const col = debajo ? debajo.closest(".columna") : null;
+  if(col !== a.col){
+    if(a.col) a.col.classList.remove("dentro");
+    if(col) col.classList.add("dentro");
+    a.col = col;
+  }
+  a.vel = y < BORDE ? -Math.ceil((BORDE - y) / 5)
+        : y > innerHeight - BORDE ? Math.ceil((y - (innerHeight - BORDE)) / 5)
+        : 0;
+}
+
+/** Con la ficha pegada a un borde, la página se desplaza sola. */
+function bucleBorde(){
+  if(!arrastre) return;
+  if(arrastre.vel){
+    scrollBy(0, arrastre.vel);
+    situarArrastre(arrastre.x, arrastre.y);
+  }
+  requestAnimationFrame(bucleBorde);
+}
+
+function terminarArrastre(){
+  if(!arrastre) return;
+  arrastre.copia.remove();
+  arrastre.ficha.classList.remove("arrastrando");
+  if(arrastre.col) arrastre.col.classList.remove("dentro");
+  document.body.style.cursor = "";
+  arrastre = null;
+}
+
+/** Mueve a mano: la ficha queda con candado para que el siguiente reparto la respete. */
+function mover(id, sid){
+  const p = persona(id);
+  if(!p) return;
+  if(p.fijadaA && p.fijadaA !== sid){
+    aviso(`${p.nombre} está fijada a ${seccion(p.fijadaA).nombre}. Cambia eso en su ficha para poder moverla.`);
+    return;
+  }
+  if(D.asig[id] === sid && D.anclados.includes(id)) return;
+  foto();
+  if(sid) D.asig[id] = sid; else delete D.asig[id];
+  if(!D.anclados.includes(id)) D.anclados.push(id);
+  elegida = null;
+  guardar(); pintarReparto(); mostrarPista();
+}
+
+let pistaTemp = null;
+function mostrarPista(texto){
+  const p = el("pista");
+  clearTimeout(pistaTemp);
+  if(texto){
+    p.textContent = texto; p.hidden = false;
+    pistaTemp = setTimeout(() => { p.hidden = true; mostrarPista(); }, 3200);
+    return;
+  }
+  if(elegida){
+    // con el dedo no hay teclado ni columnas a la vista: las secciones, aquí mismo
+    p.innerHTML = `<span class="quien">${esc(persona(elegida).nombre)} →</span>` +
+      D.secciones.map(s => `<button class="destino" data-destino="${s.id}">${esc(s.nombre)}</button>`).join("") +
+      `<button class="destino soltar" data-cancelar="1">Cancelar</button>`;
+    p.querySelectorAll("[data-destino]").forEach(b => b.onclick = ev => {
+      ev.stopPropagation();
+      if(elegida) mover(elegida, b.dataset.destino);
+    });
+    p.querySelector("[data-cancelar]").onclick = ev => {
+      ev.stopPropagation();
+      elegida = null; pintarReparto(); mostrarPista();
+    };
+    p.hidden = false;
+  } else {
+    p.textContent = "";
+    p.hidden = true;
+  }
+}
+const aviso = t => mostrarPista(t);
+
+/* ---- personas ---- */
+
+function pintarPersonas(){
+  const r = el("rejilla-personas");
+  if(!D.personas.length){
+    r.innerHTML = `<p class="nota">Todavía no hay nadie. Escribe un nombre arriba, o pulsa <b>Cargar ejemplo</b> para ver cómo funciona.</p>`;
+    return;
+  }
+  r.innerHTML = D.personas.map(p => `<div class="tarjeta" data-persona="${p.id}">${tarjetaPersona(p)}</div>`).join("");
+  engancharPersonas();
+}
+
+function tarjetaPersona(p){
+  const opciones = (sel, vacio) =>
+    `<option value="">${vacio}</option>` +
+    D.secciones.map(s => `<option value="${s.id}" ${sel === s.id ? "selected" : ""}>${esc(s.nombre)}</option>`).join("");
+
+  const chip = (q, clase, campo) => `<span class="chip ${clase}">${esc(q.nombre)}
+      <button data-quitar="${campo}" data-de="${p.id}" data-a="${q.id}" title="Quitar" aria-label="Quitar ${esc(q.nombre)}">×</button></span>`;
+
+  return `
+    <div class="cab">
+      <input type="text" value="${esc(p.nombre)}" data-nombre="${p.id}" aria-label="Nombre">
+      <button class="borra" data-borrar="${p.id}" title="Eliminar persona" aria-label="Eliminar ${esc(p.nombre)}">🗑</button>
+    </div>
+
+    <div class="bloque">
+      <label class="campo">Sus tres secciones preferidas</label>
+      <div class="tres">
+        ${[0,1,2].map(i => `<div>
+          <span class="num">${i+1}ª</span>
+          <select data-top3="${p.id}" data-pos="${i}" aria-label="Opción ${i+1}">${opciones(p.top3[i], "—")}</select>
+        </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="bloque">
+      <label class="campo">No trabaja con</label>
+      <div class="chips">
+        ${p.vetos.map(id => persona(id) ? chip(persona(id), "veto", "vetos") : "").join("")}
+        <button class="mas" data-pop="vetos" data-de="${p.id}">+ añadir</button>
+      </div>
+    </div>
+
+    <div class="bloque">
+      <label class="campo">Le gustaría trabajar con</label>
+      <div class="chips">
+        ${p.afines.map(id => persona(id) ? chip(persona(id), "afin", "afines") : "").join("")}
+        <button class="mas" data-pop="afines" data-de="${p.id}">+ añadir</button>
+      </div>
+    </div>
+
+    <div class="bloque">
+      <label class="campo">No puede ir a</label>
+      <div class="pastillas">
+        ${D.secciones.map(s => `<button class="pastilla" data-prohibe="${p.id}" data-sec="${s.id}"
+            aria-pressed="${p.prohibidas.includes(s.id)}">${esc(s.nombre)}</button>`).join("")}
+      </div>
+    </div>
+
+    <div class="bloque" style="margin-bottom:0">
+      <label class="campo">Fijada a una sección</label>
+      <select data-fija="${p.id}">${opciones(p.fijadaA, "No, que la coloque el reparto")}</select>
+    </div>`;
+}
+
+function refrescarPersona(id){
+  const caja = document.querySelector(`[data-persona="${id}"]`);
+  const p = persona(id);
+  if(caja && p){ caja.innerHTML = tarjetaPersona(p); engancharPersonas(); }
+}
+
+function engancharPersonas(){
+  const r = el("rejilla-personas");
+
+  r.querySelectorAll("[data-nombre]").forEach(inp => {
+    inp.oninput = () => { persona(inp.dataset.nombre).nombre = inp.value; guardar(); };
+    inp.onchange = () => { pintarReparto(); };
+    inp.onblur = () => { pintarPersonas(); };
+  });
+
+  r.querySelectorAll("[data-borrar]").forEach(b => b.onclick = () => {
+    const p = persona(b.dataset.borrar);
+    if(!confirm(`¿Eliminar a ${p.nombre}? También desaparece de los vetos y afinidades de los demás.`)) return;
+    foto();
+    D.personas = D.personas.filter(x => x.id !== p.id);
+    for(const q of D.personas){
+      q.vetos = q.vetos.filter(i => i !== p.id);
+      q.afines = q.afines.filter(i => i !== p.id);
+    }
+    delete D.asig[p.id];
+    D.anclados = D.anclados.filter(i => i !== p.id);
+    guardar(); pintarTodo();
+  });
+
+  r.querySelectorAll("[data-top3]").forEach(s => s.onchange = () => {
+    const p = persona(s.dataset.top3);
+    foto();
+    p.top3[+s.dataset.pos] = s.value;
+    // una sección no puede ocupar dos puestos del top 3
+    p.top3 = p.top3.map((v, i) => (i !== +s.dataset.pos && v === s.value && v) ? "" : v);
+    guardar(); refrescarPersona(p.id); pintarReparto();
+  });
+
+  r.querySelectorAll("[data-fija]").forEach(s => s.onchange = () => {
+    const p = persona(s.dataset.fija);
+    foto();
+    p.fijadaA = s.value;
+    if(p.fijadaA){
+      p.prohibidas = p.prohibidas.filter(i => i !== p.fijadaA);
+      D.asig[p.id] = p.fijadaA;
+    }
+    guardar(); refrescarPersona(p.id); pintarReparto();
+  });
+
+  r.querySelectorAll("[data-prohibe]").forEach(b => b.onclick = () => {
+    const p = persona(b.dataset.prohibe), sid = b.dataset.sec;
+    foto();
+    if(p.prohibidas.includes(sid)) p.prohibidas = p.prohibidas.filter(i => i !== sid);
+    else {
+      p.prohibidas.push(sid);
+      p.top3 = p.top3.map(v => v === sid ? "" : v);
+      if(p.fijadaA === sid) p.fijadaA = "";
+    }
+    guardar(); refrescarPersona(p.id); pintarReparto();
+  });
+
+  r.querySelectorAll("[data-quitar]").forEach(b => b.onclick = () => {
+    foto();
+    relacion(b.dataset.campo, b.dataset.de, b.dataset.a, false);
+    guardar(); pintarPersonas(); pintarReparto();
+  });
+
+  r.querySelectorAll("[data-pop]").forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    abrirPop(b, b.dataset.pop, b.dataset.de);
+  });
+}
+
+/** Pone o quita una relación mutua (vetos / afines). */
+function relacion(campo, aId, bId, poner){
+  const otro = campo === "vetos" ? "afines" : "vetos";
+  const a = persona(aId), b = persona(bId);
+  if(!a || !b || a === b) return;
+  const meter = (x, y, c) => { if(!x[c].includes(y.id)) x[c].push(y.id); };
+  const sacar = (x, y, c) => { x[c] = x[c].filter(i => i !== y.id); };
+  if(poner){
+    meter(a, b, campo); meter(b, a, campo);
+    sacar(a, b, otro);  sacar(b, a, otro);   // no puede vetar y querer a la vez
+  } else {
+    sacar(a, b, campo); sacar(b, a, campo);
+  }
+}
+
+let popActual = null;
+function abrirPop(anchor, campo, deId){
+  cerrarPop();
+  const p = persona(deId);
+  const otros = D.personas.filter(q => q.id !== deId);
+  const div = document.createElement("div");
+  div.className = "pop";
+  div.innerHTML = otros.length
+    ? otros.map(q => `<button data-id="${q.id}"><span class="tic">${p[campo].includes(q.id) ? "✓" : ""}</span>${esc(q.nombre)}</button>`).join("")
+    : `<div class="vacio">No hay nadie más en la lista.</div>`;
+  document.body.appendChild(div);
+
+  const r = anchor.getBoundingClientRect();
+  const ancho = div.offsetWidth, alto = div.offsetHeight;
+  const x = Math.max(scrollX + 12, Math.min(r.left + scrollX, scrollX + innerWidth - ancho - 12));
+  // si abajo no cabe (teclado o pantalla corta de móvil), se abre hacia arriba
+  const y = (r.bottom + alto + 12 > innerHeight && r.top > alto + 12)
+    ? r.top + scrollY - alto - 6
+    : r.bottom + scrollY + 6;
+  div.style.left = x + "px";
+  div.style.top  = y + "px";
+
+  div.querySelectorAll("[data-id]").forEach(b => b.onclick = () => {
+    foto();
+    relacion(campo, deId, b.dataset.id, !p[campo].includes(b.dataset.id));
+    guardar(); pintarPersonas(); pintarReparto(); cerrarPop();
+  });
+
+  popActual = div;
+  setTimeout(() => document.addEventListener("pointerdown", tocarFuera, {once:true}), 0);
+}
+
+function tocarFuera(ev){
+  if(popActual && popActual.contains(ev.target)){
+    document.addEventListener("pointerdown", tocarFuera, {once:true});   // seguía dentro
+    return;
+  }
+  cerrarPop();
+}
+function cerrarPop(){ if(popActual){ popActual.remove(); popActual = null; } }
+
+/* ---- secciones ---- */
+
+function pintarSecciones(){
+  el("rejilla-secciones").innerHTML = D.secciones.map(s => `
+    <div class="sec-tarjeta" style="--sec:${esc(s.color)}">
+      <div class="cab">
+        <input type="color" value="${esc(s.color)}" data-color="${s.id}" aria-label="Color de ${esc(s.nombre)}">
+        <input type="text" value="${esc(s.nombre)}" data-sec-nombre="${s.id}" aria-label="Nombre de la sección">
+        <button class="borra" data-sec-borrar="${s.id}" title="Eliminar sección" aria-label="Eliminar ${esc(s.nombre)}">🗑</button>
+      </div>
+      <div class="dos">
+        <div><label class="campo">Mínimo</label>
+          <input type="number" min="0" value="${s.min}" data-min="${s.id}"></div>
+        <div><label class="campo">Máximo</label>
+          <input type="number" min="1" value="${s.max}" data-max="${s.id}"></div>
+      </div>
+    </div>`).join("");
+
+  const r = el("rejilla-secciones");
+  r.querySelectorAll("[data-sec-nombre]").forEach(i => {
+    i.oninput = () => { seccion(i.dataset.secNombre).nombre = i.value; guardar(); };
+    i.onblur  = () => pintarTodo();
+  });
+  r.querySelectorAll("[data-color]").forEach(i => i.oninput = () => {
+    seccion(i.dataset.color).color = i.value; guardar(); pintarReparto();
+    i.closest(".sec-tarjeta").style.setProperty("--sec", i.value);
+  });
+  r.querySelectorAll("[data-min]").forEach(i => i.onchange = () => {
+    foto(); seccion(i.dataset.min).min = Math.max(0, +i.value || 0); guardar(); pintarReparto();
+  });
+  r.querySelectorAll("[data-max]").forEach(i => i.onchange = () => {
+    foto(); seccion(i.dataset.max).max = Math.max(1, +i.value || 1); guardar(); pintarReparto();
+  });
+  r.querySelectorAll("[data-sec-borrar]").forEach(b => b.onclick = () => {
+    const s = seccion(b.dataset.secBorrar);
+    if(D.secciones.length <= 1){ aviso("Tiene que quedar al menos una sección."); return; }
+    if(!confirm(`¿Eliminar ${s.nombre}? Quien esté ahí se queda sin sección hasta el próximo reparto.`)) return;
+    foto();
+    D.secciones = D.secciones.filter(x => x.id !== s.id);
+    for(const p of D.personas){
+      p.top3 = p.top3.map(v => v === s.id ? "" : v);
+      p.prohibidas = p.prohibidas.filter(i => i !== s.id);
+      if(p.fijadaA === s.id) p.fijadaA = "";
+    }
+    for(const k of Object.keys(D.asig)) if(D.asig[k] === s.id) delete D.asig[k];
+    guardar(); pintarTodo();
+  });
+}
+
+/* ---- datos ---- */
+
+function pintarDatos(){
+  const a = analizar(D.asig);
+  el("estado-datos").textContent =
+    `${D.personas.length} personas · ${D.secciones.length} secciones · ` +
+    `${D.anclados.length} con candado · ${a.vetosRotos.length} vetos rotos · ` +
+    `puntuación ${D.personas.length ? puntuar(D.asig) : 0}`;
+}
+
+/* =======================================================================
+   5. ENTRADA / SALIDA
+   ======================================================================= */
+
+const esApple = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+  (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent));
+
+/** En iPhone la descarga clásica se pierde (sobre todo abierta desde el icono
+    del escritorio), así que ahí se ofrece la hoja de compartir: Guardar en
+    Archivos, enviarlo por correo, lo que sea. */
+async function bajar(nombre, texto, tipo){
+  const trozo = new Blob([texto], {type: tipo});
+
+  if(esApple && navigator.canShare){
+    try{
+      const fichero = new File([trozo], nombre, {type: tipo});
+      if(navigator.canShare({files:[fichero]})){
+        await navigator.share({files:[fichero], title: nombre});
+        return;
+      }
+    }catch(e){
+      if(e && e.name === "AbortError") return;     // lo ha cancelado quien usa la app
+    }
+  }
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(trozo);
+  a.download = nombre;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function exportarCSV(){
+  const filas = [["Nombre","Sección","Opción","No trabaja con (en su sección)","Afinidades cumplidas","Candado"]];
+  for(const p of D.personas){
+    const sid = D.asig[p.id];
+    const i = sid ? p.top3.indexOf(sid) : -1;
+    const m = marcasDe(p, D.asig);
+    filas.push([
+      p.nombre,
+      sid ? seccion(sid).nombre : "sin sección",
+      i >= 0 ? `${i+1}ª` : "fuera del top 3",
+      m.vetos.map(q => q.nombre).join(" / "),
+      m.afines.map(q => q.nombre).join(" / "),
+      p.fijadaA ? "fijada" : D.anclados.includes(p.id) ? "sí" : ""
+    ]);
+  }
+  const csv = "﻿" + filas.map(f => f.map(c => `"${String(c).replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  bajar("reparto-kraal.csv", csv, "text/csv;charset=utf-8");
+}
+
+function ejemplo(){
+  const nombres = ["Ana","Luis","Marta","Jorge","Nerea","Pau","Clara","Iván","Sara","Diego","Rocío","Hugo"];
+  const secs = D.secciones.map(s => s.id);
+  const ps = nombres.map(n => nuevaPersona(n));
+  const rnd = mulberry32(7);
+  for(const p of ps){
+    const barajado = secs.slice().sort(() => rnd() - .5);
+    p.top3 = [barajado[0], barajado[1], barajado[2] || ""];
+  }
+  D.personas = ps;
+  D.asig = {}; D.anclados = [];
+  // un par de vetos y una afinidad, para que se vea el efecto
+  const enc = n => ps.find(p => p.nombre === n).id;
+  D.personas.find(p => p.nombre === "Ana").vetos.push(enc("Luis"));
+  D.personas.find(p => p.nombre === "Luis").vetos.push(enc("Ana"));
+  D.personas.find(p => p.nombre === "Marta").afines.push(enc("Clara"));
+  D.personas.find(p => p.nombre === "Clara").afines.push(enc("Marta"));
+  D.personas.find(p => p.nombre === "Hugo").fijadaA = secs[0];
+  D.personas.find(p => p.nombre === "Hugo").prohibidas = [];
+}
+
+/* =======================================================================
+   6. ARRANQUE
+   ======================================================================= */
+
+function irA(vista){
+  for(const b of document.querySelectorAll("nav button")){
+    const activa = b.dataset.vista === vista;
+    b.setAttribute("aria-selected", activa);
+    el("vista-" + b.dataset.vista).hidden = !activa;
+  }
+}
+
+function lanzarReparto(nuevaSemilla){
+  if(!D.personas.length){ aviso("Añade personas antes de repartir."); irA("personas"); return; }
+  foto();
+  D.asig = repartir({semilla: nuevaSemilla ? (Math.random() * 1e9) | 0 : 12345, respetarAnclados: true});
+  guardar(); pintarReparto(); pintarDatos();
+}
+
+function arrancar(){
+  cargar();
+  pintarTodo();
+  irA("reparto");
+
+  // que iOS no borre los datos por falta de uso, y que la app abra sin cobertura
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if("serviceWorker" in navigator && isSecureContext){
+    addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+
+  document.querySelectorAll("nav button").forEach(b => b.onclick = () => irA(b.dataset.vista));
+
+  el("b-repartir").onclick = () => lanzarReparto(false);
+  el("b-otra").onclick     = () => lanzarReparto(true);
+  el("b-deshacer").onclick = deshacer;
+  el("b-candados").onclick = () => { foto(); D.anclados = []; guardar(); pintarReparto(); };
+  el("b-csv").onclick = exportarCSV;
+  el("b-csv2").onclick = exportarCSV;
+
+  const anadir = nombre => {
+    const n = (nombre || "").trim();
+    if(!n) return;
+    foto();
+    D.personas.push(nuevaPersona(n));
+    guardar(); pintarPersonas(); pintarReparto();
+  };
+  el("b-anadir").onclick = () => { anadir(el("nueva-persona").value); el("nueva-persona").value = ""; el("nueva-persona").focus(); };
+  el("nueva-persona").onkeydown = ev => { if(ev.key === "Enter") el("b-anadir").click(); };
+  el("b-masivo").onclick = () => {
+    const lineas = el("masivo").value.split("\n").map(s => s.trim()).filter(Boolean);
+    if(!lineas.length) return;
+    foto();
+    for(const n of lineas) D.personas.push(nuevaPersona(n));
+    el("masivo").value = "";
+    guardar(); pintarPersonas(); pintarReparto();
+    aviso(`${lineas.length} personas añadidas.`);
+  };
+  el("b-ejemplo").onclick = () => {
+    if(D.personas.length && !confirm("Esto sustituye la lista de personas por un ejemplo. ¿Seguir?")) return;
+    foto(); ejemplo(); guardar(); pintarTodo(); lanzarReparto(false); irA("reparto");
+  };
+
+  el("b-nueva-seccion").onclick = () => {
+    foto();
+    D.secciones.push({id:uid(), nombre:"Sección nueva", min:1, max:4, color:COLORES[D.secciones.length % COLORES.length]});
+    guardar(); pintarTodo();
+  };
+
+  el("b-exportar").onclick = () => bajar("kraal.json", JSON.stringify(D, null, 2), "application/json");
+  el("b-importar").onclick = () => el("fichero").click();
+  el("fichero").onchange = ev => {
+    const f = ev.target.files[0];
+    if(!f) return;
+    const lector = new FileReader();
+    lector.onload = () => {
+      try{
+        foto();
+        D = normalizar(JSON.parse(lector.result));
+        guardar(); pintarTodo();
+        aviso("Datos importados.");
+      }catch(e){ aviso("Ese fichero no se puede leer como JSON de Kraal."); }
+      ev.target.value = "";
+    };
+    lector.readAsText(f);
+  };
+  el("b-borrar").onclick = () => {
+    if(!confirm("Se borran todas las personas y vuelven las cinco secciones de serie. ¿Seguro?")) return;
+    foto();
+    D = {personas:[], secciones:SECCIONES_BASE.map(s => ({...s})), asig:{}, anclados:[]};
+    guardar(); pintarTodo();
+  };
+
+  document.addEventListener("keydown", ev => {
+    if(ev.key === "Escape"){ elegida = null; cerrarPop(); pintarReparto(); mostrarPista(); }
+    if(elegida && /^[1-9]$/.test(ev.key)){
+      const s = D.secciones[+ev.key - 1];
+      if(s) mover(elegida, s.id);
+    }
+  });
+}
+
+/* =======================================================================
+   7. PRUEBAS — lanzar pruebas() desde la consola
+   ======================================================================= */
+
+function pruebas(){
+  const guardado = JSON.stringify(D);
+  const resultados = [];
+  const comprobar = (nombre, cond) => resultados.push((cond ? "OK   " : "FALLO") + "  " + nombre);
+
+  const montar = (personas, secciones) => {
+    D = normalizar({personas, secciones, asig:{}, anclados:[]});
+  };
+  const secDos = [
+    {id:"a", nombre:"A", min:0, max:5, color:"#000"},
+    {id:"b", nombre:"B", min:0, max:5, color:"#111"}
+  ];
+
+  // 1. respeta el top 3 cuando no hay conflictos
+  montar([
+    {id:"p1", nombre:"Uno", top3:["a","",""]},
+    {id:"p2", nombre:"Dos", top3:["b","",""]}
+  ], secDos);
+  let r = repartir({semilla:1});
+  comprobar("cada uno a su 1ª opción", r.p1 === "a" && r.p2 === "b");
+
+  // 2. un veto separa a dos personas aunque quieran la misma sección
+  montar([
+    {id:"p1", nombre:"Uno", top3:["a","",""], vetos:["p2"]},
+    {id:"p2", nombre:"Dos", top3:["a","",""], vetos:["p1"]}
+  ], secDos);
+  r = repartir({semilla:2});
+  comprobar("el veto los separa", r.p1 !== r.p2);
+
+  // 3. la sección prohibida no se usa
+  montar([{id:"p1", nombre:"Uno", top3:["a","",""], prohibidas:["a"]}], secDos);
+  r = repartir({semilla:3});
+  comprobar("no la mete en una sección prohibida", r.p1 === "b");
+
+  // 4. una persona fijada no se mueve
+  montar([
+    {id:"p1", nombre:"Uno", top3:["a","",""], fijadaA:"b"},
+    {id:"p2", nombre:"Dos", top3:["a","",""]}
+  ], secDos);
+  r = repartir({semilla:4});
+  comprobar("la persona fijada se queda donde toca", r.p1 === "b");
+
+  // 5. el mínimo tira de gente hacia la sección vacía
+  montar([
+    {id:"p1", nombre:"Uno",  top3:["a","",""]},
+    {id:"p2", nombre:"Dos",  top3:["a","",""]},
+    {id:"p3", nombre:"Tres", top3:["a","",""]}
+  ], [
+    {id:"a", nombre:"A", min:0, max:5, color:"#000"},
+    {id:"b", nombre:"B", min:2, max:5, color:"#111"}
+  ]);
+  r = repartir({semilla:5});
+  comprobar("cumple el mínimo de la otra sección", Object.values(r).filter(v => v === "b").length >= 2);
+
+  // 6. la afinidad desempata cuando la preferencia da igual
+  montar([
+    {id:"p1", nombre:"Uno", top3:["","",""], afines:["p2"]},
+    {id:"p2", nombre:"Dos", top3:["","",""], afines:["p1"]}
+  ], secDos);
+  r = repartir({semilla:6});
+  comprobar("la afinidad los junta si nada lo impide", r.p1 === r.p2);
+
+  // 6b. pero no a costa de la preferencia: 2 primeras opciones valen más que una afinidad
+  montar([
+    {id:"p1", nombre:"Uno", top3:["a","b",""], afines:["p2"]},
+    {id:"p2", nombre:"Dos", top3:["b","a",""], afines:["p1"]}
+  ], secDos);
+  r = repartir({semilla:66});
+  comprobar("la preferencia pesa más que la afinidad", r.p1 === "a" && r.p2 === "b");
+
+  // 7. el candado se respeta
+  montar([
+    {id:"p1", nombre:"Uno", top3:["a","",""]},
+    {id:"p2", nombre:"Dos", top3:["a","",""]}
+  ], secDos);
+  D.asig = {p1:"b"}; D.anclados = ["p1"];
+  r = repartir({semilla:7, respetarAnclados:true});
+  comprobar("respeta el candado", r.p1 === "b");
+
+  // 8. la relación es mutua y veto y afinidad no conviven
+  montar([
+    {id:"p1", nombre:"Uno"}, {id:"p2", nombre:"Dos"}
+  ], secDos);
+  relacion("afines", "p1", "p2", true);
+  relacion("vetos",  "p1", "p2", true);
+  comprobar("veto mutuo", persona("p1").vetos.includes("p2") && persona("p2").vetos.includes("p1"));
+  comprobar("el veto anula la afinidad", !persona("p1").afines.includes("p2") && !persona("p2").afines.includes("p1"));
+
+  D = normalizar(JSON.parse(guardado));
+  pintarTodo();
+  console.log(resultados.join("\n"));
+  return resultados.every(t => t.startsWith("OK")) ? "Todas las pruebas pasan." : "Hay pruebas que fallan.";
+}
+window.pruebas = pruebas;
+
+arrancar();
+</script>
+</body>
+</html>
